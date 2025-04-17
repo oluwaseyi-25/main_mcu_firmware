@@ -5,10 +5,12 @@
 
 void setup() {
   Serial.begin(921600);
-  while (!Serial);
+  while (!Serial)
+    ;
   fingerPrintSerial.begin(57600, SERIAL_8N1, 15, 16);
   screenSerial.begin(921600, SERIAL_8N1, 19, 20);
-  while (!fingerPrintSerial);
+  while (!fingerPrintSerial)
+    ;
   checkFingerprintModule();
 
   mfrc522.PCD_Init();
@@ -16,20 +18,26 @@ void setup() {
 }
 
 void loop() {
-  fingerprint_loop();
-  rfid_loop();
-
   static char read_char;
   screen_command_str = "";
   read_char = 0;
-  while(screenSerial.available() > 0) {
+  while (screenSerial.available() > 0) {
     read_char = screenSerial.read();
-    if(read_char == '\n') {
+    if (read_char == '\n') {
       screenSerial.flush();
-      if (deserializeJson(screen_command, screen_command_str)) break;
-      Serial.println(serializeJson(screen_command, Serial));
+      screen_command = JSON.parse(screen_command_str);
+      if (JSON.typeof_(screen_command) != "undefined")
+        Serial.println(JSON.stringify(
+                             cmdResponseToJSON(
+                               exec_cmd(screen_command)))
+                         .c_str());
       break;
     }
     screen_command_str += read_char;
+  }
+
+  if (current_state == CURRENT_USER_SCREEN) {
+    rfid_loop();
+    fingerprint_loop();
   }
 }

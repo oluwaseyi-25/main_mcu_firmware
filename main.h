@@ -13,8 +13,7 @@
 #include "SPIFFS.h"
 #include <WiFi.h>
 
-#include <ArduinoJson.h>
-#include <ArduinoJson.hpp>
+#include <Arduino_JSON.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebSrv.h>
 
@@ -82,7 +81,7 @@ typedef struct {
 } CMD_RESPONSE;
 
 typedef struct {
-  JsonDocument args;
+  JSONVar args;
 } CMD_INPUT;
 
 enum SCREEN {
@@ -103,18 +102,18 @@ typedef CMD_RESPONSE (*OpPtr)(CMD_INPUT);
 
 OpPtr opcodeToFunc(String opcode);
 bool verifyPassword(String pwd);
-CMD_RESPONSE exec_cmd(JsonDocument cmd);
-JsonDocument cmdResponseToJSON(CMD_RESPONSE);
+CMD_RESPONSE exec_cmd(JSONVar cmd);
+JSONVar cmdResponseToJSON(CMD_RESPONSE);
 
 struct USER* users_list;
 struct USER* new_user;
 struct USER current_user;
-JsonDocument cmd, response, location;
+JSONVar cmd, response, location;
 String PASSWORD = "123456";
 bool enroll_flag = false;
 
 uint8_t n_users = 0;
 String screen_command_str, screen_response_str;
-JsonDocument screen_command, screen_response;
+JSONVar screen_command, screen_response;
 
-byte current_state = SCREEN::HOME_SCREEN;
+enum SCREEN current_state = HOME_SCREEN;
