@@ -3,6 +3,14 @@ CMD_RESPONSE template_(CMD_INPUT cmd_input) {
   return ret;
 }
 
+CMD_RESPONSE capture_fprint (CMD_INPUT cmd_input) {
+  CMD_RESPONSE ret;
+  enroll_flag = true;
+  ret.status = "OK";
+  ret.body = "Fingerprint capture";
+  return ret;
+}
+
 CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret;
   user new_user;
@@ -11,8 +19,9 @@ CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
   new_user.matric_no = (uint32_t)atoll(matric_no.c_str());
   new_user.level = (uint8_t)(atol((const char *)cmd_input.args["level"]) / 100);
   String((const char *)cmd_input.args["dept"]).toCharArray(new_user.dept, 4);
+  new_user.fingerprintId = new_user_fprint_id;
   ret.status = "OK";
-  
+
   const uint8_t *p = (const uint8_t *)&new_user;
 
   Serial.println("Bring card close!!!");

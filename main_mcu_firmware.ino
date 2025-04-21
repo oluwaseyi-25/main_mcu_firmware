@@ -39,5 +39,25 @@ void loop() {
   if (current_state == CURRENT_USER_SCREEN) {
     rfid_loop();
     fingerprint_loop();
+  } else if (current_state == CAPTURE_SCREEN) {
+    // Enter fingerprint enrollment mode if initiated correctly
+    if (enroll_flag) {
+      finger.getTemplateCount();
+      new_user_fprint_id = finger.templateCount + 1;
+      switch (FingerprintEnroll(new_user_fprint_id)) {
+        case 1:
+          screenSerial.println("User enrolled successfully");
+          break;
+
+        case -2:
+          screenSerial.println("Timeout");
+          break;
+
+        default:
+          screenSerial.println("Couldn't enroll user");
+          break;
+      }
+      enroll_flag = false;  // Leave enrollment mode immediately after.
+    }
   }
 }

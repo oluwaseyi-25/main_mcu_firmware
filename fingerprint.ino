@@ -25,6 +25,8 @@ int8_t checkCode(uint8_t code) {
       return 0;
 
     case FINGERPRINT_OK:
+      return 1;
+
     case FINGERPRINT_PACKETRECIEVEERR:
     case FINGERPRINT_IMAGEFAIL:
     case FINGERPRINT_ENROLLMISMATCH:
@@ -36,10 +38,11 @@ int8_t checkCode(uint8_t code) {
 }
 
 // Enroll a new user fingerprint model into the Fingerprint module's memory
-int8_t FingerprintEnroll(user* new_user) {
+int8_t FingerprintEnroll(uint8_t id) {
   int8_t p = -1;
   uint32_t timer;
   timer = millis();
+  screenSerial.println("Place finger on the sensor");
   while (1) {
     if (millis() - timer > TIMEOUT) return -2;
     p = checkCode(finger.getImage());
@@ -55,9 +58,12 @@ int8_t FingerprintEnroll(user* new_user) {
   if (p < 0) {
     return p;
   }
+  screenSerial.println("Finger captured");
+  delay(1000);
 
   p = -1;
   //checks to make sure your finger has been removed
+  screenSerial.println("Remove finger from the sensor");
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
     yield();
@@ -65,6 +71,7 @@ int8_t FingerprintEnroll(user* new_user) {
 
   p = -1;
   timer = millis();
+  screenSerial.println("Place the same finger on the sensor again");
   while (1) {
     if (millis() - timer > TIMEOUT) return -2;
     p = checkCode(finger.getImage());
@@ -78,16 +85,22 @@ int8_t FingerprintEnroll(user* new_user) {
   if (p < 0) return p;
   else {
   }
+  screenSerial.println("Finger captured");
+  delay(1000);
 
   // OK converted!
   p = checkCode(finger.createModel());
   if (p < 0) return p;
   else {
   }
+  screenSerial.println("Finger model created");
+  delay(1000);
 
-  p = checkCode(finger.storeModel(new_user->fingerprintId));
+  p = checkCode(finger.storeModel(id));
   if (p < 0) return p;
   else {
+    screenSerial.printf("Finger model stored at index %d\n", id);
+    delay(1000);
     return 1;
   }
 }
@@ -145,28 +158,5 @@ void fingerprint_loop() {
           yield();
         break;
       }
-  }
-
-  // Enter fingerprint enrollment mode if initiated correctly
-  if (enroll_flag) {
-    CMD_RESPONSE res;
-    switch (FingerprintEnroll(new_user)) {
-      case 1:
-        // new_user->next = users_list;
-        // users_list = new_user;
-        // n_users++;
-        res.status = "OK";
-        res.body = "User enrolled successfully";
-        break;
-      case -2:
-        res.status = "ERR";
-        res.body = "Operation Timed out";
-        break;
-      default:
-        res.status = "ERR";
-        res.body = "Couldn't enroll user";
-        break;
-    }
-    enroll_flag = false;  // Leave enrollment mode immediately after.
   }
 }

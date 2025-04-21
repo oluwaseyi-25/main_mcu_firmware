@@ -107,6 +107,7 @@ CMD_RESPONSE exec_cmd(JSONVar cmd);
 JSONVar cmdResponseToJSON(CMD_RESPONSE);
 
 user* new_user;
+uint8_t new_user_fprint_id = 0;
 user* current_user;
 JSONVar cmd, response;
 String PASSWORD = "123456";

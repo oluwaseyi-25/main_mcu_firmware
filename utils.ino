@@ -5,6 +5,8 @@ OpPtr opcodeToFunc(String opcode) {
     ret = change_screen;
   else if (strcmp(opcode.c_str(), "flash_card") == 0)
     ret = flash_card;
+  else if (strcmp(opcode.c_str(), "capture_fprint") == 0)
+    ret = capture_fprint;
   else {
     ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
       CMD_RESPONSE ret = { "ERR", "Operation not supported yet" };
