@@ -92,6 +92,13 @@ enum SCREEN {
   CAPTURE_SCREEN
 };
 
+enum AUTH_MODE {
+  NONE,
+  FPRINT,
+  FACE,
+  HYBRID
+};
+
 typedef struct {
   uint32_t matric_no;
   uint8_t level;
@@ -110,7 +117,7 @@ user* new_user;
 uint8_t new_user_fprint_id = 0;
 user* current_user;
 JSONVar cmd, response;
-String PASSWORD = "123456";
+JSONVar current_user_json;
 bool enroll_flag = false;
 bool flash_card_flag = false;
 
@@ -119,3 +126,4 @@ String screen_command_str, screen_response_str;
 JSONVar screen_command, screen_response;
 
 enum SCREEN current_state = HOME_SCREEN;
+enum AUTH_MODE current_auth = NONE;

@@ -3,11 +3,26 @@ CMD_RESPONSE template_(CMD_INPUT cmd_input) {
   return ret;
 }
 
-CMD_RESPONSE capture_fprint (CMD_INPUT cmd_input) {
+CMD_RESPONSE start_class(CMD_INPUT cmd_input) {
+  CMD_RESPONSE ret;
+  ret.status = "OK";
+  String auth_mode = (String) cmd_input.args["auth_mode"];
+  if (auth_mode == "NONE") {
+    current_auth = NONE;
+  } else if (auth_mode == "FINGERPRINT") {
+    current_auth = FPRINT;
+  } else if (auth_mode == "FACE") {
+    current_auth = FACE;
+  } else if (auth_mode == "HYBRID") {
+    current_auth = HYBRID;
+  }
+  return ret;
+}
+
+CMD_RESPONSE capture_fprint(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret;
   enroll_flag = true;
   ret.status = "OK";
-  ret.body = "Fingerprint capture";
   return ret;
 }
 

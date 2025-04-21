@@ -143,6 +143,9 @@ void fingerprint_loop() {
           yield();
         }
         LOG("We don't know you!");
+        current_user_json["tries_left"] = tries_left;
+        screenSerial.println(JSON.stringify(current_user_json).c_str());
+        // TODO: Log attempt
         if (!tries_left) {
           LOG("\nMaximum trials exceeded!");
         }
@@ -152,8 +155,11 @@ void fingerprint_loop() {
     default:  // We know you
       {
         tries_left = 3;
-        // current_user = *getUser(finger_status);
-        Serial.printf("We know you! ID: %d\n", finger_status);
+        if (finger_status == current_user->fingerprintId) {
+          current_user_json["verified"] = true;
+        }
+        screenSerial.println(JSON.stringify(current_user_json).c_str());
+        // TODO: Log successful attendance
         while (finger.getImage() != FINGERPRINT_NOFINGER)
           yield();
         break;

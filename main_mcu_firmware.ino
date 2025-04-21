@@ -38,8 +38,10 @@ void loop() {
 
   if (current_state == CURRENT_USER_SCREEN) {
     rfid_loop();
-    fingerprint_loop();
-  } else if (current_state == CAPTURE_SCREEN) {
+    if (current_auth == FPRINT || current_auth == HYBRID)
+      fingerprint_loop();
+  } 
+  else if (current_state == CAPTURE_SCREEN) {
     // Enter fingerprint enrollment mode if initiated correctly
     if (enroll_flag) {
       finger.getTemplateCount();

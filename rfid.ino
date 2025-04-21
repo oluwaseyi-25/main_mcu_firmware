@@ -123,7 +123,7 @@ void writeToUltralight(byte pageAddr, byte* buffer, byte size) {
       Serial.print(F("MIFARE_Write() failed: "));
       return;
     } else {
-      Serial.printf("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (unsigned char*)buffer[i * 4]);
+      Serial.printf("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (char *)&buffer[i * 4]);
     }
   }
   Serial.println();
@@ -179,11 +179,11 @@ void rfid_loop() {
   }
 
   current_user = (user*)&readStuff;
-  JSONVar current_user_json;
   current_user_json["matric_no"] = String(current_user->matric_no);
   current_user_json["level"] = String(current_user->level * 100);
   current_user_json["dept"] = String(current_user->dept);
-  current_user_json["fingerprintId"] = String(current_user->fingerprintId);
+  current_user_json["fingerprintId"] = current_user->fingerprintId;
+  current_user_json["verified"] = false;
   screenSerial.println(JSON.stringify(current_user_json).c_str());
 
 
