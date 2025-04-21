@@ -36,7 +36,7 @@ int8_t checkCode(uint8_t code) {
 }
 
 // Enroll a new user fingerprint model into the Fingerprint module's memory
-int8_t FingerprintEnroll(struct USER* user) {
+int8_t FingerprintEnroll(user* new_user) {
   int8_t p = -1;
   uint32_t timer;
   timer = millis();
@@ -85,7 +85,7 @@ int8_t FingerprintEnroll(struct USER* user) {
   else {
   }
 
-  p = checkCode(finger.storeModel(user->fingerprintId));
+  p = checkCode(finger.storeModel(new_user->fingerprintId));
   if (p < 0) return p;
   else {
     return 1;
@@ -152,9 +152,9 @@ void fingerprint_loop() {
     CMD_RESPONSE res;
     switch (FingerprintEnroll(new_user)) {
       case 1:
-        new_user->next = users_list;
-        users_list = new_user;
-        n_users++;
+        // new_user->next = users_list;
+        // users_list = new_user;
+        // n_users++;
         res.status = "OK";
         res.body = "User enrolled successfully";
         break;

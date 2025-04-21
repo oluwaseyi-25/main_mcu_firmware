@@ -92,11 +92,12 @@ enum SCREEN {
   CAPTURE_SCREEN
 };
 
-struct USER {
-  char name[NAME_SIZE] = "";
+typedef struct {
+  uint32_t matric_no;
+  uint8_t level;
+  char dept[4];
   uint8_t fingerprintId = 0;
-  struct USER* next = NULL;
-};
+} user;
 
 typedef CMD_RESPONSE (*OpPtr)(CMD_INPUT);
 
@@ -105,12 +106,12 @@ bool verifyPassword(String pwd);
 CMD_RESPONSE exec_cmd(JSONVar cmd);
 JSONVar cmdResponseToJSON(CMD_RESPONSE);
 
-struct USER* users_list;
-struct USER* new_user;
-struct USER current_user;
-JSONVar cmd, response, location;
+user* new_user;
+user* current_user;
+JSONVar cmd, response;
 String PASSWORD = "123456";
 bool enroll_flag = false;
+bool flash_card_flag = false;
 
 uint8_t n_users = 0;
 String screen_command_str, screen_response_str;

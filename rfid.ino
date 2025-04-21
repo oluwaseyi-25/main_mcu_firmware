@@ -123,7 +123,7 @@ void writeToUltralight(byte pageAddr, byte* buffer, byte size) {
       Serial.print(F("MIFARE_Write() failed: "));
       return;
     } else {
-      Serial.printf("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (char*) buffer[i * 4]);
+      Serial.printf("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (unsigned char*)buffer[i * 4]);
     }
   }
   Serial.println();
@@ -168,26 +168,25 @@ void rfid_loop() {
     return;
   }
 
-  static byte readStuff[40];
-
+  static byte readStuff[sizeof(user)];
   // Determine card type
   if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_UL) {
     Serial.println("Ultralight Card detected\n");
-    readFromUltralight(6, readStuff, 40);
+    readFromUltralight(6, readStuff, sizeof(user));
   } else if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_1K) {
     Serial.println("1K Card detected\n");
-    readFromBlock(8, readStuff, 40);
+    readFromBlock(8, readStuff, sizeof(user));
   }
 
-  // static byte stuffToWrite[24] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
-  // writeToUltralight(6, stuffToWrite, sizeof(stuffToWrite));
+  current_user = (user*)&readStuff;
+  JSONVar current_user_json;
+  current_user_json["matric_no"] = String(current_user->matric_no);
+  current_user_json["level"] = String(current_user->level * 100);
+  current_user_json["dept"] = String(current_user->dept);
+  current_user_json["fingerprintId"] = String(current_user->fingerprintId);
+  screenSerial.println(JSON.stringify(current_user_json).c_str());
 
-
-  // Serial.println("Dumping buffer to serial: ");
-  // for (byte i = 0; i < sizeof(readStuff); i++) {
-  //   Serial.printf(" %02X ", readStuff[i]);
-  // }
-  // Serial.println();
 
   mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
 }
