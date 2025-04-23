@@ -3,6 +3,44 @@ CMD_RESPONSE template_(CMD_INPUT cmd_input) {
   return ret;
 }
 
+/**
+ * @brief Changes the WiFi credentials and reconnects to the network.
+ *
+ * This function updates the WiFi SSID and password based on the provided command input.
+ * It writes the new credentials to a configuration file and attempts to reconnect to the network.
+ *
+ * @param cmd_input Command input containing the new SSID and password.
+ * @return CMD_RESPONSE A response object indicating the status and result of the operation.
+ */
+CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
+{
+  CMD_RESPONSE ret = {"OK", "WiFi changed successfully"};
+  if (cmd_input.args.hasOwnProperty("ssid") && cmd_input.args.hasOwnProperty("password"))
+  {
+    ssid = (const char *)cmd_input.args["ssid"];
+    password = (const char *)cmd_input.args["password"];
+    if (!writeFile(SPIFFS, "/config.json", JSON.stringify(cmd_input.args).c_str()))
+    {
+      ret.status = "ERR";
+      ret.body = "Failed to write to config file";
+      return ret;
+    }
+    WiFi.disconnect();
+    if (!connect_to_network())
+    {
+      ret.status = "ERR";
+      ret.body = "Failed to connect to new WiFi network";
+      return ret;
+    }
+  }
+  else
+  {
+    ret.status = "ERR";
+    ret.body = "SSID and password are required";
+  }
+  return ret;
+}
+
 CMD_RESPONSE start_class(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret;
   ret.status = "OK";

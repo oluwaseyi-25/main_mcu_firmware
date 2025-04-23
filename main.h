@@ -1,23 +1,35 @@
-
 #ifdef TEST_MODE
-#define LOG(msg) \
-  Serial.println(); \
-  Serial.println(msg);
+#define LOG(msg)         \
+    Serial.println();    \
+    Serial.println(msg); \
+    Serial.flush();
+#define LOGF(...) \
+    Serial.printf(__VA_ARGS__);
 #else
 #define LOG(msg)
+#define LOGF(...)
 #endif
 
-#include <stdint.h>
+#ifdef ERROR_LOGGING
+#define LOG_ERR(msg)     \
+    Serial.println();    \
+    Serial.println(msg); \
+    Serial.flush();
+#else
+#define LOG_ERR(msg)
+#endif
+
+
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include "SPIFFS.h"
 #include <WiFi.h>
 
 #include <Arduino_JSON.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebSrv.h>
+#include <WebSocketsClient.h>
 
 #define WAIT 1000
+#define cameraSerial Serial
 
 WiFiClient client;
 
@@ -38,12 +50,6 @@ uint8_t id;  // id number for fingerprint
 int getFingerprintIDez();
 // End Fingerprint Declarations
 
-
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
-
-// Create a WebSocket object
-AsyncWebSocket ws("/ws");
 
 // fingeprint attempt counter
 int mismatch_count = 0;
@@ -112,6 +118,7 @@ OpPtr opcodeToFunc(String opcode);
 bool verifyPassword(String pwd);
 CMD_RESPONSE exec_cmd(JSONVar cmd);
 JSONVar cmdResponseToJSON(CMD_RESPONSE);
+WebSocketsClient webSocket;
 
 user* new_user;
 uint8_t new_user_fprint_id = 0;
@@ -122,7 +129,7 @@ bool enroll_flag = false;
 bool flash_card_flag = false;
 
 uint8_t n_users = 0;
-String screen_command_str, screen_response_str;
+String screen_command_str, screen_response_str, ssid, password;
 JSONVar screen_command, screen_response;
 
 enum SCREEN current_state = HOME_SCREEN;
