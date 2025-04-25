@@ -1,6 +1,11 @@
 // Mapping from instructions to functions
 OpPtr opcodeToFunc(String opcode) {
   OpPtr ret;
+  
+  if (opcode == "change_network") //change_network
+    ret = change_wifi;
+  return ret;
+
   if (opcode == "change_screen")
     ret = change_screen;
   else if (opcode == "flash_card")
@@ -9,8 +14,6 @@ OpPtr opcodeToFunc(String opcode) {
     ret = capture_fprint;
   else if (opcode == "start_class")
     ret = start_class;
-  else if (opcode == "change_wifi")
-    ret = change_wifi;
   else if (opcode == "take_photo")
     ret = take_photo;
   else if (opcode == "diagnostics")

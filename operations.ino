@@ -31,10 +31,10 @@ CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
   JSONVar cam_cmd;
   cam_cmd["args"] = cmd_input.args;
   cam_cmd["cmd"] = "change_wifi";
-  if (cmd_input.args.hasOwnProperty("ssid") && cmd_input.args.hasOwnProperty("password"))
+  if (cmd_input.args.hasOwnProperty("ssid") && cmd_input.args.hasOwnProperty("pwd"))
   {
     ssid = (const char *)cmd_input.args["ssid"];
-    password = (const char *)cmd_input.args["password"];
+    password = (const char *)cmd_input.args["pwd"];
     if (!writeFile(SPIFFS, "/config.json", JSON.stringify(cmd_input.args).c_str()))
     {
       ret.status = "ERR";
