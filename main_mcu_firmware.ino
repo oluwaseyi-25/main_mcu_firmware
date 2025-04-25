@@ -59,16 +59,18 @@ void loop() {
     LOG_ERR("WiFi has been disconnected\nReconnecting...\n");
     if (!connect_to_network()) return;
   }
+
   // listen for incoming commands on serial port
   if (screenSerial.available()) {
     screen_command_str = screenSerial.readStringUntil('\n');
     LOGF("\nReceived command: %s\n", screen_command_str.c_str());
-    // Confirm if the command is a valid json string
     screen_command = JSON.parse(screen_command_str);
+    // Confirm if the command is a valid json string
     if (JSON.typeof(screen_command) == "undefined") {
       LOG_ERR("Parsing input failed!");
-    } else {
-      LOG(JSON.stringify(cmdResponseToJSON(exec_cmd(screen_command))).c_str());
+    }
+    else{
+      LOG(JSON.stringify(cmdResponseToJSON(exec_cmd(screen_command))).c_str()); 
     }
   }
 
@@ -87,12 +89,10 @@ void loop() {
       face_details.args["level"] = current_user->level;
       face_details.args["dept"] = current_user->dept;
 
-      // TODO: loop this till a timeout is reached
       LOG_CAM(JSON.stringify(cmdResponseToJSON(take_photo(face_details))).c_str());
       face_scanned = true;
     }
   }
-
   else if (current_state == CAPTURE_SCREEN) {
     // Enter fingerprint enrollment mode if initiated correctly
     if (enroll_flag) {
@@ -102,18 +102,15 @@ void loop() {
         case 1:
           screenSerial.println("User enrolled successfully");
           break;
-
         case -2:
           screenSerial.println("Timeout");
           break;
-
         default:
           screenSerial.println("Couldn't enroll user");
           break;
       }
       enroll_flag = false;  // Leave enrollment mode immediately after.
     }
-    // TODO: Add picture enrollment function
   }
   webSocket.loop();
 }

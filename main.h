@@ -25,15 +25,6 @@
 #define LOG_ERR(msg)
 #endif
 
-
-#include <Arduino.h>
-#include <HardwareSerial.h>
-#include "SPIFFS.h"
-#include <WiFi.h>
-
-#include <Arduino_JSON.h>
-#include <WebSocketsClient.h>
-
 #define WAIT 1000
 
 #define CAMERA_RX 32
@@ -45,12 +36,19 @@
 #define SCREEN_RX 3
 #define SCREEN_TX 1
 
+#include <Arduino.h>
+#include <HardwareSerial.h>
+#include "SPIFFS.h"
+#include <WiFi.h>
+#include <Arduino_JSON.h>
+#include <WebSocketsClient.h>
+#include <Adafruit_Fingerprint.h>
+
+
 WiFiClient client;
 
 
 
-// Fingerprint Related stuff
-#include <Adafruit_Fingerprint.h>
 
 // Replace with your network credentials
 String WiFiSSID = "MTN_4G_48437C";
@@ -63,9 +61,6 @@ HardwareSerial cameraSerial(2);
 Adafruit_Fingerprint finger(&fingerPrintSerial);
 
 uint8_t id;  // id number for fingerprint
-int getFingerprintIDez();
-// End Fingerprint Declarations
-
 
 // fingeprint attempt counter
 int mismatch_count = 0;
@@ -74,17 +69,6 @@ int mismatch_count = 0;
 unsigned long lastTime = 0;
 unsigned long timerDelay = 3000;
 
-
-
-// WEBSOCKET DECLARATIONS
-
-// void initWebSocket();
-// // WebSocket transmission to dashboard
-// void notifyClients(String sensorReadings);
-
-// // WebSocket event handler
-// void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len);
-// void handleWebSocketMessage(void* arg, uint8_t* data, size_t len);
 
 //========================COMMANDS===============================
 #define CMD_RET(status, body) \
@@ -145,10 +129,12 @@ OpPtr opcodeToFunc(int opcode);
 bool verifyPassword(String pwd);
 CMD_RESPONSE exec_cmd(JSONVar cmd);
 JSONVar cmdResponseToJSON(CMD_RESPONSE);
+
 WebSocketsClient webSocket;
 
 user* new_user;
 uint8_t new_user_fprint_id = 0;
+String new_user_card_uid;
 user* current_user;
 JSONVar cmd, response;
 JSONVar current_user_json;

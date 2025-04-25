@@ -105,7 +105,7 @@ int8_t FingerprintEnroll(uint8_t id) {
   }
 }
 
-// Hnadles Fingerprint Authentication logic
+// Handles Fingerprint Authentication logic
 // returns -1 if failed, otherwise returns ID #
 int getFingerprintIDez() {
   uint8_t p = finger.getImage();
@@ -148,6 +148,7 @@ void fingerprint_loop() {
         // TODO: Log attempt
         if (!tries_left) {
           LOG("\nMaximum trials exceeded!");
+          log_attendance();
         }
         break;
       }
@@ -159,9 +160,9 @@ void fingerprint_loop() {
           current_user_json["verified"] = true;
         }
         // Send confirmation to screen
+        log_attendance();  // Log successful attendance
         screenSerial.println(JSON.stringify(current_user_json).c_str());
         card_scanned = false;
-        // TODO: Log successful attendance
         while (finger.getImage() != FINGERPRINT_NOFINGER)
           yield();
         break;

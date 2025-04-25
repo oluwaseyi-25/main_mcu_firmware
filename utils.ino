@@ -1,7 +1,6 @@
 // Mapping from instructions to functions
 OpPtr opcodeToFunc(int opcode) {
   OpPtr ret;
-
   switch (opcode) {
     case CHANGE_NETWORK:  //change_network
       ret = change_wifi;
@@ -20,6 +19,9 @@ OpPtr opcodeToFunc(int opcode) {
       return ret;
     case TAKE_PHOTO:
       ret = take_photo;
+      return ret;
+    case SAVE_NEW_USER:
+      ret = enroll_user;
       return ret;
     case DIAGNOSTICS:
       ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
@@ -63,6 +65,7 @@ OpPtr opcodeToFunc(int opcode) {
       };
       break;
   }
+  return ret;
 }
 
 CMD_RESPONSE exec_cmd(JSONVar cmd) {

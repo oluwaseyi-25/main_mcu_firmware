@@ -184,8 +184,9 @@ void rfid_loop() {
   current_user_json["dept"] = String(current_user->dept);
   current_user_json["fingerprintId"] = current_user->fingerprintId;
   if (current_auth == NONE) {
-    current_user_json["verified"] = true;
+    log_attendance();
     card_scanned = false;
+    current_user_json["verified"] = true;
   }
   else {
     current_user_json["verified"] = false;
@@ -194,8 +195,6 @@ void rfid_loop() {
   }
 
   screenSerial.println(JSON.stringify(current_user_json).c_str());
-
-  
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
 }

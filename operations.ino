@@ -1,8 +1,26 @@
 CMD_RESPONSE template_(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret;
   return ret;
+
 }
 
+void log_attendance() {
+  JSONVar attendance_data = current_user_json;
+  attendance_data["cmd"] = "log_attendance";
+  webSocket.sendTXT(JSON.stringify(attendance_data).c_str());
+  return;
+}
+
+CMD_RESPONSE enroll_user(CMD_INPUT cmd_input) {
+  CMD_RESPONSE ret = {"OK", "User enrolled"};
+  
+  JSONVar new_user_data = cmd_input.args;
+  new_user_data["fprint_id"] = new_user_fprint_id;
+  new_user_data["card_uid"] = new_user_card_uid;
+  new_user_data["cmd"] = String("enroll_user");
+  webSocket.sendTXT(JSON.stringify(new_user_data).c_str());
+  return ret;
+}
 
 CMD_RESPONSE take_photo(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret = {"OK", "Photo taken successfully"};
@@ -25,8 +43,7 @@ CMD_RESPONSE take_photo(CMD_INPUT cmd_input) {
  * @param cmd_input Command input containing the new SSID and password.
  * @return CMD_RESPONSE A response object indicating the status and result of the operation.
  */
-CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
-{
+CMD_RESPONSE change_wifi(CMD_INPUT cmd_input){
   CMD_RESPONSE ret = {"OK", "WiFi changed successfully"};
   JSONVar cam_cmd;
   cam_cmd["args"] = cmd_input.args;
@@ -59,7 +76,7 @@ CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
 }
 
 CMD_RESPONSE start_class(CMD_INPUT cmd_input) {
-  CMD_RESPONSE ret;
+  CMD_RESPONSE ret = {"OK", "Started class"};
   ret.status = "OK";
   String auth_mode = (String) cmd_input.args["auth_mode"];
   if (auth_mode == "NONE") {
@@ -71,6 +88,9 @@ CMD_RESPONSE start_class(CMD_INPUT cmd_input) {
   } else if (auth_mode == "HYBRID") {
     current_auth = HYBRID;
   }
+  JSONVar class_details = cmd_input.args;
+  class_details["cmd"] = "start_class";
+  webSocket.sendTXT(JSON.stringify(class_details).c_str());
   return ret;
 }
 
@@ -107,8 +127,17 @@ CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
     LOG("1K Card detected\n");
     writeToBlock(8, (uint8_t *)p, sizeof(user));
   }
-  mfrc522.PICC_HaltA();
 
+  // Save the UID on a String variable
+  new_user_card_uid = "";
+  for (byte i = 0; i < mfrc522.uid.size; i++) {
+    if (mfrc522.uid.uidByte[i] < 0x10) {
+      new_user_card_uid += "0"; 
+    }
+    new_user_card_uid += String(mfrc522.uid.uidByte[i], HEX);
+  }
+
+  mfrc522.PICC_HaltA();
   ret.body = "Card flashed!!";
   return ret;
 }
