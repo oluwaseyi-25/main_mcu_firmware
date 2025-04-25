@@ -1,69 +1,75 @@
 // Mapping from instructions to functions
-OpPtr opcodeToFunc(String opcode) {
+OpPtr opcodeToFunc(int opcode) {
   OpPtr ret;
-  
-  if (opcode == "change_network") //change_network
-    ret = change_wifi;
-  return ret;
 
-  if (opcode == "change_screen")
-    ret = change_screen;
-  else if (opcode == "flash_card")
-    ret = flash_card;
-  else if (opcode == "capture_fprint")
-    ret = capture_fprint;
-  else if (opcode == "start_class")
-    ret = start_class;
-  else if (opcode == "take_photo")
-    ret = take_photo;
-  else if (opcode == "diagnostics")
-    ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
-      CMD_RESPONSE ret = { "OK", "Diagnostics command executed successfully" };
-      // Return a report of the current state of the system
-      String wifiStatus = (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected";
-      String ipAddress = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : "N/A";
-
-      // Get memory stats
-      uint32_t freeHeap = ESP.getFreeHeap();
-      uint32_t totalHeap = ESP.getHeapSize();
-      uint32_t usedHeap = totalHeap - freeHeap;
-
-      // Check for PSRAM availability
-      String psramStatus = psramFound() ? "Available" : "Not Available";
-      uint32_t psramSize = psramFound() ? ESP.getPsramSize() : 0;
-      uint32_t freePsram = psramFound() ? ESP.getFreePsram() : 0;
-      uint32_t usedPsram = psramSize - freePsram;
-
-      ret.body = "Camera Diagnostics Report:\n";
-      ret.body += "WiFi Status: " + wifiStatus + "\n";
-      ret.body += "IP Address: " + ipAddress + "\n";
-      ret.body += "Memory Stats:\n";
-      ret.body += "  Total Heap: " + String(totalHeap) + " bytes\n";
-      ret.body += "  Used Heap: " + String(usedHeap) + " bytes\n";
-      ret.body += "  Free Heap: " + String(freeHeap) + " bytes\n";
-      ret.body += "PSRAM Stats:\n";
-      ret.body += "  PSRAM Status: " + psramStatus + "\n";
-      if (psramFound()) {
-        ret.body += "  Total PSRAM: " + String(psramSize) + " bytes\n";
-        ret.body += "  Used PSRAM: " + String(usedPsram) + " bytes\n";
-        ret.body += "  Free PSRAM: " + String(freePsram) + " bytes\n";
-      }
+  switch (opcode) {
+    case CHANGE_NETWORK:  //change_network
+      ret = change_wifi;
       return ret;
-    };
-  else {
-    ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
-      CMD_RESPONSE ret = { "ERR", "Operation not supported yet" };
+    case CHANGE_SCREEN:
+      ret = change_screen;
       return ret;
-    };
+    case FLASH_CARD:
+      ret = flash_card;
+      return ret;
+    case CAPTURE_FPRINT:
+      ret = capture_fprint;
+      return ret;
+    case START_CLASS:
+      ret = start_class;
+      return ret;
+    case TAKE_PHOTO:
+      ret = take_photo;
+      return ret;
+    case DIAGNOSTICS:
+      ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
+        CMD_RESPONSE ret = { "OK", "Diagnostics command executed successfully" };
+        // Return a report of the current state of the system
+        String wifiStatus = (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected";
+        String ipAddress = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : "N/A";
+
+        // Get memory stats
+        uint32_t freeHeap = ESP.getFreeHeap();
+        uint32_t totalHeap = ESP.getHeapSize();
+        uint32_t usedHeap = totalHeap - freeHeap;
+
+        // Check for PSRAM availability
+        String psramStatus = psramFound() ? "Available" : "Not Available";
+        uint32_t psramSize = psramFound() ? ESP.getPsramSize() : 0;
+        uint32_t freePsram = psramFound() ? ESP.getFreePsram() : 0;
+        uint32_t usedPsram = psramSize - freePsram;
+
+        ret.body = "Camera Diagnostics Report:\n";
+        ret.body += "WiFi Status: " + wifiStatus + "\n";
+        ret.body += "IP Address: " + ipAddress + "\n";
+        ret.body += "Memory Stats:\n";
+        ret.body += "  Total Heap: " + String(totalHeap) + " bytes\n";
+        ret.body += "  Used Heap: " + String(usedHeap) + " bytes\n";
+        ret.body += "  Free Heap: " + String(freeHeap) + " bytes\n";
+        ret.body += "PSRAM Stats:\n";
+        ret.body += "  PSRAM Status: " + psramStatus + "\n";
+        if (psramFound()) {
+          ret.body += "  Total PSRAM: " + String(psramSize) + " bytes\n";
+          ret.body += "  Used PSRAM: " + String(usedPsram) + " bytes\n";
+          ret.body += "  Free PSRAM: " + String(freePsram) + " bytes\n";
+        }
+        return ret;
+      };
+      break;
+    default:
+      ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
+        CMD_RESPONSE ret = { "ERR", "Operation not supported yet" };
+        return ret;
+      };
+      break;
   }
-  return ret;
 }
 
 CMD_RESPONSE exec_cmd(JSONVar cmd) {
   CMD_INPUT cmd_input = {
     (JSONVar)cmd["args"]
   };
-  return opcodeToFunc(cmd["cmd"])(cmd_input);
+  return opcodeToFunc((int)cmd["cmd"])(cmd_input);
 }
 
 JSONVar cmdResponseToJSON(CMD_RESPONSE response) {
@@ -155,7 +161,7 @@ bool loadConfig() {
 
   Serial.println("JSON parsed successfully.");
   ssid = (const char *)json["ssid"];
-  password = (const char *)json["password"];
+  password = (const char *)json["pwd"];
   LOGF("SSID: %s", ssid.c_str());
   LOGF("\t Password: %s\n", password.c_str());
   return true;
@@ -178,7 +184,7 @@ bool connect_to_network() {
   while (WiFi.status() != WL_CONNECTED) {
     if (millis() - startAttemptTime > 10000)  // 10 seconds timeout
       return false;
-    
+
     Serial.print(".");
     delay(500);
     yield();  // Allow other tasks to run
@@ -196,30 +202,28 @@ bool connect_to_network() {
  * @param payload The payload data associated with the event.
  * @param length The length of the payload data.
  */
-void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
-{
-  switch (type)
-  {
-  case WStype_DISCONNECTED:
-    LOGF("[WSc] Disconnected!\n");
-    break;
-  case WStype_CONNECTED:
-    LOGF("[WSc] Connected to url: %s\n", payload);
-    break;
-  case WStype_TEXT:
-    LOGF("[WSc] get text: %s\n", payload);
-    break;
-  case WStype_ERROR:
-    LOGF("[WSc] Error occurred!\n");
-    break;
-  case WStype_PING:
-    LOGF("[WSc] Ping received!\n");
-    break;
-  case WStype_PONG:
-    LOGF("[WSc] Pong received!\n");
-    break;
-  default:
-    LOGF("[WSc] Unhandled event type: %d\n", type);
-    break;
+void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      LOGF("[WSc] Disconnected!\n");
+      break;
+    case WStype_CONNECTED:
+      LOGF("[WSc] Connected to url: %s\n", payload);
+      break;
+    case WStype_TEXT:
+      LOGF("[WSc] get text: %s\n", payload);
+      break;
+    case WStype_ERROR:
+      LOGF("[WSc] Error occurred!\n");
+      break;
+    case WStype_PING:
+      LOGF("[WSc] Ping received!\n");
+      break;
+    case WStype_PONG:
+      LOGF("[WSc] Pong received!\n");
+      break;
+    default:
+      LOGF("[WSc] Unhandled event type: %d\n", type);
+      break;
   }
 }

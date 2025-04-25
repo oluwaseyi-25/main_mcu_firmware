@@ -68,10 +68,7 @@ void loop() {
     if (JSON.typeof(screen_command) == "undefined") {
       LOG_ERR("Parsing input failed!");
     } else {
-      LOG(JSON.stringify(
-                           cmdResponseToJSON(
-                             exec_cmd(screen_command)))
-                       .c_str());
+      LOG(JSON.stringify(cmdResponseToJSON(exec_cmd(screen_command))).c_str());
     }
   }
 
@@ -94,7 +91,6 @@ void loop() {
       LOG_CAM(JSON.stringify(cmdResponseToJSON(take_photo(face_details))).c_str());
       face_scanned = true;
     }
-
   }
 
   else if (current_state == CAPTURE_SCREEN) {
@@ -117,7 +113,6 @@ void loop() {
       }
       enroll_flag = false;  // Leave enrollment mode immediately after.
     }
-
     // TODO: Add picture enrollment function
   }
   webSocket.loop();

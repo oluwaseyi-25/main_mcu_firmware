@@ -121,6 +121,17 @@ enum AUTH_MODE {
   HYBRID
 };
 
+enum COMMANDS {
+  CHANGE_NETWORK,
+  CHANGE_SCREEN,
+  FLASH_CARD,
+  CAPTURE_FPRINT,
+  START_CLASS,
+  TAKE_PHOTO,
+  DIAGNOSTICS,
+  SAVE_NEW_USER
+};
+
 typedef struct {
   uint32_t matric_no;
   uint8_t level;
@@ -130,7 +141,7 @@ typedef struct {
 
 typedef CMD_RESPONSE (*OpPtr)(CMD_INPUT);
 
-OpPtr opcodeToFunc(String opcode);
+OpPtr opcodeToFunc(int opcode);
 bool verifyPassword(String pwd);
 CMD_RESPONSE exec_cmd(JSONVar cmd);
 JSONVar cmdResponseToJSON(CMD_RESPONSE);
