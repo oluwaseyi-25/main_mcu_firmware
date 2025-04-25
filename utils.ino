@@ -11,6 +11,8 @@ OpPtr opcodeToFunc(String opcode) {
     ret = start_class;
   else if (opcode == "change_wifi")
     ret = change_wifi;
+  else if (opcode == "take_photo")
+    ret = take_photo;
   else if (opcode == "diagnostics")
     ret = [](CMD_INPUT cmd_input) -> CMD_RESPONSE {
       CMD_RESPONSE ret = { "OK", "Diagnostics command executed successfully" };
@@ -151,8 +153,8 @@ bool loadConfig() {
   Serial.println("JSON parsed successfully.");
   ssid = (const char *)json["ssid"];
   password = (const char *)json["password"];
-  Serial.printf("SSID: %s", ssid.c_str());
-  Serial.printf("\t Password: %s\n", password.c_str());
+  LOGF("SSID: %s", ssid.c_str());
+  LOGF("\t Password: %s\n", password.c_str());
   return true;
 }
 
@@ -172,15 +174,12 @@ bool connect_to_network() {
 
   while (WiFi.status() != WL_CONNECTED) {
     if (millis() - startAttemptTime > 10000)  // 10 seconds timeout
-    {
-      Serial.println("WiFi connection timed out...\nCheck your credentials...");
       return false;
-    }
+    
     Serial.print(".");
     delay(500);
     yield();  // Allow other tasks to run
   }
-  Serial.printf("\nConnected to WiFi network. IP address: %s\n", WiFi.localIP().toString().c_str());
   return true;
 }
 
@@ -199,26 +198,25 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
   switch (type)
   {
   case WStype_DISCONNECTED:
-    Serial.printf("[WSc] Disconnected!\n");
+    LOGF("[WSc] Disconnected!\n");
     break;
   case WStype_CONNECTED:
-    Serial.printf("[WSc] Connected to url: %s\n", payload);
-    webSocket.sendTXT("Connected");
+    LOGF("[WSc] Connected to url: %s\n", payload);
     break;
   case WStype_TEXT:
-    Serial.printf("[WSc] get text: %s\n", payload);
+    LOGF("[WSc] get text: %s\n", payload);
     break;
   case WStype_ERROR:
-    Serial.printf("[WSc] Error occurred!\n");
+    LOGF("[WSc] Error occurred!\n");
     break;
   case WStype_PING:
-    Serial.printf("[WSc] Ping received!\n");
+    LOGF("[WSc] Ping received!\n");
     break;
   case WStype_PONG:
-    Serial.printf("[WSc] Pong received!\n");
+    LOGF("[WSc] Pong received!\n");
     break;
   default:
-    Serial.printf("[WSc] Unhandled event type: %d\n", type);
+    LOGF("[WSc] Unhandled event type: %d\n", type);
     break;
   }
 }

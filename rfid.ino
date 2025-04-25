@@ -3,20 +3,20 @@ byte store[] = { "The warning missage WARNING: Communication failure, is the MFR
 
 // MIFARE 1K card functions
 void writeToBlock(byte block, byte* data, uint16_t size) {
-  Serial.println("\n---------------------------------");
-  Serial.printf("Writing to block %u\n", block);
-  Serial.println("---------------------------------");
+  LOG("\n---------------------------------");
+  LOGF("Writing to block %u\n", block);
+  LOG("---------------------------------");
 
   uint16_t offset = 0;
   int sectorid = (byte)block / 4;
   for (int blockid = block; blockid < 64; blockid++) {
     if ((blockid % 4 == 3 && blockid != 63) || blockid == 0 || blockid == block) {
-      Serial.printf("-------------\nSector %d\n-------------\n", sectorid);
-      Serial.printf("Requesting permission for block %u \n-------------\n", blockid + 1);
+      LOGF("-------------\nSector %d\n-------------\n", sectorid);
+      LOGF("Requesting permission for block %u \n-------------\n", blockid + 1);
 
       // Authenticate the specified block using KEY_A = 0x60
       if (mfrc522.PCD_Authenticate(0x60, blockid + 1, &key, &(mfrc522.uid)) != 0) {
-        Serial.println("\nAuthentication failed.");
+        LOG("\nAuthentication failed.");
         return;
       }
 
@@ -31,7 +31,7 @@ void writeToBlock(byte block, byte* data, uint16_t size) {
 
     byte write_data[16] = { 0 };
     if (offset < size) {
-      Serial.printf("\nWrite to block %d (in sector %u): ", blockid, (byte)blockid / 4);
+      LOGF("\nWrite to block %d (in sector %u): ", blockid, (byte)blockid / 4);
       for (int k = 0; k < 16; k++) {
         if (offset + k < size) {
           write_data[k] = *(data + (offset + k));
@@ -43,32 +43,32 @@ void writeToBlock(byte block, byte* data, uint16_t size) {
 
       // write to block
       if (mfrc522.MIFARE_Write(blockid, write_data, 16) != 0) {
-        Serial.println("\nWrite failed.");
+        LOG("\nWrite failed.");
       } else {
         Serial.print("\nData written successfully in block: ");
-        Serial.println(blockid);
+        LOG(blockid);
       }
       offset += 16;
-      Serial.println();
+      LOG();
     } else break;
   }
 }
 
 void readFromBlock(byte block, byte* buffer, uint16_t size) {
-  Serial.println("\n---------------------------------");
-  Serial.printf("Reading from block %u\n", block);
-  Serial.println("---------------------------------");
+  LOG("\n---------------------------------");
+  LOGF("Reading from block %u\n", block);
+  LOG("---------------------------------");
 
   uint16_t offset = 0;
   int sectorid = (byte)block / 4;
   for (int blockid = block; blockid < 64; blockid++) {
     if ((blockid % 4 == 3 && blockid != 63) || blockid == 0 || blockid == block) {
-      Serial.printf("-------------\nSector %d\n-------------\n", sectorid);
-      Serial.printf("Requesting permission for block %u \n-------------\n", blockid + 1);
+      LOGF("-------------\nSector %d\n-------------\n", sectorid);
+      LOGF("Requesting permission for block %u \n-------------\n", blockid + 1);
 
       // Authenticate the specified block using KEY_A = 0x60
       if (mfrc522.PCD_Authenticate(0x60, blockid + 1, &key, &(mfrc522.uid)) != 0) {
-        Serial.println("\nAuthentication failed.");
+        LOG("\nAuthentication failed.");
         return;
       }
       sectorid++;
@@ -85,14 +85,13 @@ void readFromBlock(byte block, byte* buffer, uint16_t size) {
 
     // write to block
     if (mfrc522.MIFARE_Read(blockid, read_data, &read_size) != 0) {
-      Serial.println("\nRead failed.");
+      LOG("\nRead failed.");
     } else {
-      Serial.print("\nData read successfully from block: ");
-      Serial.println(blockid);
+      LOGF("\nData read successfully from block: %d\n", blockid);
     }
 
     if (offset < size) {
-      Serial.printf("\nRead from block %d (in sector %u): ", blockid, (byte)blockid / 4);
+      LOGF("\nRead from block %d (in sector %u): ", blockid, (byte)blockid / 4);
       for (int k = 0; k < 16; k++) {
         if (offset + k < size) {
           *(buffer + (offset + k)) = read_data[k];
@@ -100,7 +99,7 @@ void readFromBlock(byte block, byte* buffer, uint16_t size) {
         Serial.print((char)read_data[k]);
       }
       offset += 16;
-      Serial.println();
+      LOG();
     } else break;
   }
 }
@@ -112,7 +111,7 @@ void writeToUltralight(byte pageAddr, byte* buffer, byte size) {
   }
 
   if (size > 40) {
-    Serial.println("Space constraint");
+    LOG_ERR("Space constraint");
     return;
   }
 
@@ -120,13 +119,13 @@ void writeToUltralight(byte pageAddr, byte* buffer, byte size) {
   for (int i = 0; i < size / 4; i++) {
     //data is writen in blocks of 4 bytes (4 bytes per page)
     if (mfrc522.MIFARE_Ultralight_Write(pageAddr + i, &buffer[i * 4], 4) != 0) {
-      Serial.print(F("MIFARE_Write() failed: "));
+      LOG_ERR(F("MIFARE_Write() failed: "));
       return;
     } else {
-      Serial.printf("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (char *)&buffer[i * 4]);
+      LOGF("MIFARE_Ultralight_Write() OK to page %u: %*.s \n", pageAddr + i, 4, (char *)&buffer[i * 4]);
     }
   }
-  Serial.println();
+  LOG();
 }
 
 void readFromUltralight(byte pageAddr, byte* buffer, byte size) {
@@ -134,14 +133,14 @@ void readFromUltralight(byte pageAddr, byte* buffer, byte size) {
     return;
 
   if (size > 40) {
-    Serial.println("Space constraint");
+    LOG("Space constraint");
     return;
   }
 
   // Read data ***************************************************
   byte read_data[18] = { 0 };
   byte read_size = 18;
-  Serial.println(F("Reading data ... "));
+  LOG(F("Reading data ... "));
 
   // data in 4 pages (16 bytes) are read at once.
   for (uint16_t offset = 0; offset < size; offset += 16) {
@@ -150,14 +149,14 @@ void readFromUltralight(byte pageAddr, byte* buffer, byte size) {
       Serial.print(F("MIFARE_Read() failed: "));
     } else {
       Serial.print("\nData read successfully from page: ");
-      Serial.println(pageAddr + (offset / 4));
+      LOG(pageAddr + (offset / 4));
       for (int k = 0; k < 16; k++) {
         if (offset + k < size) {
           *(buffer + (offset + k)) = read_data[k];
         } else break;
-        Serial.printf(" %02X ", read_data[k]);
+        LOGF(" %02X ", read_data[k]);
       }
-      Serial.println();
+      LOG();
     }
   }
 }
@@ -171,22 +170,32 @@ void rfid_loop() {
   static byte readStuff[sizeof(user)];
   // Determine card type
   if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_UL) {
-    Serial.println("Ultralight Card detected\n");
+    LOG("Ultralight Card detected\n");
     readFromUltralight(6, readStuff, sizeof(user));
   } else if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_1K) {
-    Serial.println("1K Card detected\n");
+    LOG("1K Card detected\n");
     readFromBlock(8, readStuff, sizeof(user));
   }
 
+  // TODO: Error check
   current_user = (user*)&readStuff;
   current_user_json["matric_no"] = String(current_user->matric_no);
   current_user_json["level"] = String(current_user->level * 100);
   current_user_json["dept"] = String(current_user->dept);
   current_user_json["fingerprintId"] = current_user->fingerprintId;
-  current_user_json["verified"] = false;
+  if (current_auth == NONE) {
+    current_user_json["verified"] = true;
+    card_scanned = false;
+  }
+  else {
+    current_user_json["verified"] = false;
+    card_scanned = true;
+    face_scanned = false;
+  }
+
   screenSerial.println(JSON.stringify(current_user_json).c_str());
 
-
+  
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
 }

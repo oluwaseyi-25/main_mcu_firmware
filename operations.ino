@@ -3,6 +3,19 @@ CMD_RESPONSE template_(CMD_INPUT cmd_input) {
   return ret;
 }
 
+
+CMD_RESPONSE take_photo(CMD_INPUT cmd_input) {
+  CMD_RESPONSE ret = {"OK", "Photo taken successfully"};
+
+  JSONVar res;
+  res["args"] = cmd_input.args;
+  res["cmd"] = "take_photo";
+  
+  // Send command to ESP32-CAM
+  cameraSerial.println(JSON.stringify(res).c_str());
+  return ret;
+}
+
 /**
  * @brief Changes the WiFi credentials and reconnects to the network.
  *
@@ -15,6 +28,9 @@ CMD_RESPONSE template_(CMD_INPUT cmd_input) {
 CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
 {
   CMD_RESPONSE ret = {"OK", "WiFi changed successfully"};
+  JSONVar cam_cmd;
+  cam_cmd["args"] = cmd_input.args;
+  cam_cmd["cmd"] = "change_wifi";
   if (cmd_input.args.hasOwnProperty("ssid") && cmd_input.args.hasOwnProperty("password"))
   {
     ssid = (const char *)cmd_input.args["ssid"];
@@ -32,6 +48,7 @@ CMD_RESPONSE change_wifi(CMD_INPUT cmd_input)
       ret.body = "Failed to connect to new WiFi network";
       return ret;
     }
+    cameraSerial.println(JSON.stringify(cam_cmd).c_str());
   }
   else
   {
@@ -77,13 +94,19 @@ CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
 
   const uint8_t *p = (const uint8_t *)&new_user;
 
-  Serial.println("Bring card close!!!");
+  screenSerial.println("Bring card close!!!");
   while (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
     yield();
   }
 
-  writeToBlock(8, (uint8_t *)p, sizeof(user));
-
+  // Determine card type
+  if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_UL) {
+    LOG("Ultralight Card detected\n");
+    writeToUltralight(6, (uint8_t *)p, sizeof(user));
+  } else if (mfrc522.PICC_GetType(mfrc522.uid.sak) == MFRC522::PICC_Type::PICC_TYPE_MIFARE_1K) {
+    LOG("1K Card detected\n");
+    writeToBlock(8, (uint8_t *)p, sizeof(user));
+  }
   mfrc522.PICC_HaltA();
 
   ret.body = "Card flashed!!";

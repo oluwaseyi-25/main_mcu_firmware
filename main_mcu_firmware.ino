@@ -6,26 +6,28 @@
 
 void setup() {
   // Boot delay
+  screenSerial.begin(921600, SERIAL_8N1, SCREEN_RX, SCREEN_TX);
+  while (!screenSerial);
+
+  cameraSerial.begin(921600, SERIAL_8N1, CAMERA_RX, CAMERA_TX);
+  while (!cameraSerial);
+
+  fingerPrintSerial.begin(57600, SERIAL_8N1, FPRINT_RX, FPRINT_TX);
+  while (!fingerPrintSerial);
+
   for (int i = 0; i < 5; i++) {
     LOGF("[BOOT] %u...\n", i);
     delay(1000);
   }
 
-  Serial.begin(921600);
-  while (!Serial)
-    ;
-  fingerPrintSerial.begin(57600, SERIAL_8N1, 15, 16);
-  screenSerial.begin(921600, SERIAL_8N1, 19, 20);
-  while (!fingerPrintSerial)
-    ;
   checkFingerprintModule();
 
   // Initialize SPIFFS
   SPIFFS.begin(true);
   if (!SPIFFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting SPIFFS");
+    LOG_ERR("An Error has occurred while mounting SPIFFS");
   }
-  Serial.println("SPIFFS mounted successfully.");
+  LOG("SPIFFS mounted successfully.");
 
   // Load configuration from SPIFFS
   if (!loadConfig()) {
@@ -34,17 +36,16 @@ void setup() {
     password = "Pelumi0209";
   }
 
-  if (connect_to_network())
-    Serial.printf("Connected to WiFi. IP address: %s\n", WiFi.localIP().toString().c_str());
+  WiFi.mode(WIFI_STA);
+  WiFi.setTxPower(WIFI_POWER_11dBm);
+  if (!connect_to_network()){
+    LOG("WiFi connection timed out...\nCheck your credentials...");
+  }
+  else {
+    LOGF("Connected to WiFi. IP address: %s\n", WiFi.localIP().toString().c_str());
+  }
 
   webSocket.begin("192.168.0.200", 5000, "/command");
-  Serial.println("Connecting to WebSocket server...");
-  while (!webSocket.isConnected()) {
-    Serial.print(".");
-    webSocket.loop();
-    delay(500);
-  }
-  Serial.println("\nConnected to WebSocket server.");
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
   webSocket.enableHeartbeat(15000, 3000, 2);  // Enable heartbeat with 15s ping interval, 3s pong timeout, and 2 disconnect attempts
@@ -54,27 +55,49 @@ void setup() {
 }
 
 void loop() {
+  if (!WiFi.isConnected()) {
+    LOG_ERR("WiFi has been disconnected\nReconnecting...\n");
+    if (!connect_to_network()) return;
+  }
   // listen for incoming commands on serial port
-  if (Serial.available()) {
-    screen_command_str = Serial.readStringUntil('\n');
-    Serial.printf("\nReceived command: %s\n", screen_command_str.c_str());
+  if (screenSerial.available()) {
+    screen_command_str = screenSerial.readStringUntil('\n');
+    LOGF("\nReceived command: %s\n", screen_command_str.c_str());
     // Confirm if the command is a valid json string
     screen_command = JSON.parse(screen_command_str);
     if (JSON.typeof(screen_command) == "undefined") {
-      Serial.println("Parsing input failed!");
+      LOG_ERR("Parsing input failed!");
     } else {
-      Serial.println(JSON.stringify(
+      LOG(JSON.stringify(
                            cmdResponseToJSON(
                              exec_cmd(screen_command)))
                        .c_str());
     }
   }
 
+  if (cameraSerial.available()) {
+    LOG_CAM(cameraSerial.readStringUntil('\n').c_str());
+  }
+
   if (current_state == CURRENT_USER_SCREEN) {
     rfid_loop();
     if (current_auth == FPRINT || current_auth == HYBRID)
       fingerprint_loop();
-  } else if (current_state == CAPTURE_SCREEN) {
+    if (!face_scanned && card_scanned && (current_auth == FACE || current_auth == HYBRID)) {
+      CMD_INPUT face_details;
+      face_details.args["cmd"] = "verify_face";
+      face_details.args["matric_no"] = current_user->matric_no;
+      face_details.args["level"] = current_user->level;
+      face_details.args["dept"] = current_user->dept;
+
+      // TODO: loop this till a timeout is reached
+      LOG_CAM(JSON.stringify(cmdResponseToJSON(take_photo(face_details))).c_str());
+      face_scanned = true;
+    }
+
+  }
+
+  else if (current_state == CAPTURE_SCREEN) {
     // Enter fingerprint enrollment mode if initiated correctly
     if (enroll_flag) {
       finger.getTemplateCount();
@@ -94,6 +117,8 @@ void loop() {
       }
       enroll_flag = false;  // Leave enrollment mode immediately after.
     }
+
+    // TODO: Add picture enrollment function
   }
   webSocket.loop();
 }

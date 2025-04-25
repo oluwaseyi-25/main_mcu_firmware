@@ -1,20 +1,26 @@
 #ifdef TEST_MODE
 #define LOG(msg)         \
-    Serial.println();    \
-    Serial.println(msg); \
-    Serial.flush();
+    screenSerial.println();    \
+    screenSerial.println(msg); \
+    screenSerial.flush();
+#define LOG_CAM(msg)         \
+    screenSerial.println();    \
+    screenSerial.print("[CAM] ");    \
+    screenSerial.println(msg); \
+    screenSerial.flush();
 #define LOGF(...) \
-    Serial.printf(__VA_ARGS__);
+    screenSerial.printf(__VA_ARGS__);
 #else
 #define LOG(msg)
+#define LOG_CAM(msg)
 #define LOGF(...)
 #endif
 
 #ifdef ERROR_LOGGING
 #define LOG_ERR(msg)     \
-    Serial.println();    \
-    Serial.println(msg); \
-    Serial.flush();
+    screenSerial.println();    \
+    screenSerial.println(msg); \
+    screenSerial.flush();
 #else
 #define LOG_ERR(msg)
 #endif
@@ -29,7 +35,15 @@
 #include <WebSocketsClient.h>
 
 #define WAIT 1000
-#define cameraSerial Serial
+
+#define CAMERA_RX 32
+#define CAMERA_TX 33
+
+#define FPRINT_RX 16
+#define FPRINT_TX 17
+
+#define SCREEN_RX 3
+#define SCREEN_TX 1
 
 WiFiClient client;
 
@@ -42,8 +56,10 @@ WiFiClient client;
 String WiFiSSID = "MTN_4G_48437C";
 String WiFiPass = "Pelumi0209";
 
-HardwareSerial screenSerial(1);
-HardwareSerial fingerPrintSerial(2);
+// #define cameraSerial Serial
+HardwareSerial screenSerial(0);
+HardwareSerial fingerPrintSerial(1);
+HardwareSerial cameraSerial(2);
 Adafruit_Fingerprint finger(&fingerPrintSerial);
 
 uint8_t id;  // id number for fingerprint
@@ -127,6 +143,9 @@ JSONVar cmd, response;
 JSONVar current_user_json;
 bool enroll_flag = false;
 bool flash_card_flag = false;
+bool card_scanned = false;
+bool face_scanned = false;
+bool wifi_status;
 
 uint8_t n_users = 0;
 String screen_command_str, screen_response_str, ssid, password;

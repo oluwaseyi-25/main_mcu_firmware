@@ -99,7 +99,7 @@ int8_t FingerprintEnroll(uint8_t id) {
   p = checkCode(finger.storeModel(id));
   if (p < 0) return p;
   else {
-    screenSerial.printf("Finger model stored at index %d\n", id);
+    LOGF("Finger model stored at index %d\n", id);
     delay(1000);
     return 1;
   }
@@ -158,7 +158,9 @@ void fingerprint_loop() {
         if (finger_status == current_user->fingerprintId) {
           current_user_json["verified"] = true;
         }
+        // Send confirmation to screen
         screenSerial.println(JSON.stringify(current_user_json).c_str());
+        card_scanned = false;
         // TODO: Log successful attendance
         while (finger.getImage() != FINGERPRINT_NOFINGER)
           yield();

@@ -1,5 +1,5 @@
 #define isTrailerBlock(n) ((n + 1) % 4) == 0
-#define SDA_PIN 10
+#define SDA_PIN 5
 
 #include <MFRC522v2.h>
 #include <MFRC522DriverSPI.h>
