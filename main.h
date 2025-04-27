@@ -43,12 +43,16 @@
 #include <Arduino_JSON.h>
 #include <WebSocketsClient.h>
 #include <Adafruit_Fingerprint.h>
-
+#include "time.h"
+#include "esp_sntp.h"
 
 WiFiClient client;
 
 
-
+const char* ntpServer1 = "pool.ntp.org";
+const char* ntpServer2 = "time.nist.gov";
+const long gmtOffset_sec = 3600;
+const int daylightOffset_sec = 0;
 
 // Replace with your network credentials
 String WiFiSSID = "MTN_4G_48437C";
@@ -134,6 +138,7 @@ WebSocketsClient webSocket;
 
 user* new_user;
 uint8_t new_user_fprint_id = 0;
+String current_timestamp;
 String new_user_card_uid;
 user* current_user;
 JSONVar cmd, response;
@@ -143,6 +148,8 @@ bool flash_card_flag = false;
 bool card_scanned = false;
 bool face_scanned = false;
 bool wifi_status;
+uint32_t face_scan_timer = 0;
+bool received_face_scan_response = false;
 
 uint8_t n_users = 0;
 String screen_command_str, screen_response_str, ssid, password;

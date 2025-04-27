@@ -214,8 +214,19 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
       LOGF("[WSc] Connected to url: %s\n", payload);
       break;
     case WStype_TEXT:
+    {
       LOGF("[WSc] get text: %s\n", payload);
+      JSONVar res = JSON.parse((const char *)payload);
+      if (millis() - face_scan_timer < 2000 \
+          && JSON.typeof(res) != "undefined" \
+          && current_state == CURRENT_USER_SCREEN \
+          && !received_face_scan_response) {
+        received_face_scan_response = true;
+        current_user_json["verified"] = String((const char *)res["status"]) == String("OK") ? true : false;
+        screenSerial.println(JSON.stringify(current_user_json));
+      }
       break;
+    }
     case WStype_ERROR:
       LOGF("[WSc] Error occurred!\n");
       break;
@@ -229,4 +240,24 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
       LOGF("[WSc] Unhandled event type: %d\n", type);
       break;
   }
+}
+
+void getTime()
+{
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo, 10))
+  {
+    LOG_ERR("No time available (yet)");
+    return;
+  }
+  char _curr_tstamp[32];
+  strftime(_curr_tstamp, 32, "%Y-%m-%d %H:%M:%S", &timeinfo);
+  current_timestamp = _curr_tstamp;
+}
+
+// Callback function (gets called when time adjusts via NTP)
+void timeavailable(struct timeval *t)
+{
+  LOG("Got time adjustment from NTP!");
+  getTime();
 }

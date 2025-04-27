@@ -52,12 +52,27 @@ void setup() {
 
   mfrc522.PCD_Init();
   memset(&(key.keyByte), 0xFF, 6);
+
+    // Time keeping
+  if (WiFi.isConnected())
+  {
+    esp_sntp_servermode_dhcp(1); // (optional)
+    sntp_set_time_sync_notification_cb(timeavailable);
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
+  }
 }
 
 void loop() {
   if (!WiFi.isConnected()) {
     LOG_ERR("WiFi has been disconnected\nReconnecting...\n");
     if (!connect_to_network()) return;
+  }
+
+  static uint32_t home_screen_timer = millis();
+  if (millis() - home_screen_timer > 500)
+  {
+    getTime();
+    home_screen_timer = millis();
   }
 
   // listen for incoming commands on serial port

@@ -29,6 +29,8 @@ CMD_RESPONSE take_photo(CMD_INPUT cmd_input) {
   res["args"] = cmd_input.args;
   res["cmd"] = "take_photo";
   
+  face_scan_timer = millis();
+  received_face_scan_response = false;
   // Send command to ESP32-CAM
   cameraSerial.println(JSON.stringify(res).c_str());
   return ret;
