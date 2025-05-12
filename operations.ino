@@ -50,10 +50,17 @@ CMD_RESPONSE change_wifi(CMD_INPUT cmd_input){
   JSONVar cam_cmd;
   cam_cmd["args"] = cmd_input.args;
   cam_cmd["cmd"] = "change_wifi";
-  if (cmd_input.args.hasOwnProperty("ssid") && cmd_input.args.hasOwnProperty("pwd"))
+  if (cmd_input.args.hasOwnProperty("ssid") && 
+      cmd_input.args.hasOwnProperty("pwd") && 
+      cmd_input.args.hasOwnProperty("ws_ip") && 
+      cmd_input.args.hasOwnProperty("ws_port") && 
+      cmd_input.args.hasOwnProperty("ws_route") )
   {
     ssid = (const char *)cmd_input.args["ssid"];
     password = (const char *)cmd_input.args["pwd"];
+    ws_ip = (const char *)cmd_input.args["ws_ip"];
+    ws_port = (unsigned int) cmd_input.args["ws_port"];
+    ws_route = (const char *)cmd_input.args["ws_route"];
     if (!writeFile(SPIFFS, "/config.json", JSON.stringify(cmd_input.args).c_str()))
     {
       ret.status = "ERR";
@@ -67,6 +74,8 @@ CMD_RESPONSE change_wifi(CMD_INPUT cmd_input){
       ret.body = "Failed to connect to new WiFi network";
       return ret;
     }
+    webSocket.disconnect();
+    webSocket.begin(ws_ip.c_str(), ws_port, ws_route.c_str());
     cameraSerial.println(JSON.stringify(cam_cmd).c_str());
   }
   else
@@ -106,9 +115,7 @@ CMD_RESPONSE capture_fprint(CMD_INPUT cmd_input) {
 CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
   CMD_RESPONSE ret;
   user new_user;
-  String matric_no = String((const char *)cmd_input.args["matric_no"]);
-  matric_no.remove(4, 1);  // remove the "/"
-  new_user.matric_no = (uint32_t)atoll(matric_no.c_str());
+  new_user.matric_no = (uint32_t)atoll((const char *)cmd_input.args["matric_no"]);
   new_user.level = (uint8_t)(atol((const char *)cmd_input.args["level"]) / 100);
   String((const char *)cmd_input.args["dept"]).toCharArray(new_user.dept, 4);
   new_user.fingerprintId = new_user_fprint_id;
@@ -139,8 +146,9 @@ CMD_RESPONSE flash_card(CMD_INPUT cmd_input) {
     new_user_card_uid += String(mfrc522.uid.uidByte[i], HEX);
   }
 
-  mfrc522.PICC_HaltA();
   ret.body = "Card flashed!!";
+  mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
   return ret;
 }
 

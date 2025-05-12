@@ -143,12 +143,15 @@ void fingerprint_loop() {
           yield();
         }
         LOG("We don't know you!");
-        current_user_json["tries_left"] = tries_left;
-        screenSerial.println(JSON.stringify(current_user_json).c_str());
+        if (JSON.typeof(current_user_json) != "null") {
+          current_user_json["tries_left"] = tries_left;
+          screenSerial.println(JSON.stringify(current_user_json).c_str());
+        }
         // TODO: Log attempt
         if (!tries_left) {
           LOG("\nMaximum trials exceeded!");
           log_attendance();
+          current_user_json = JSONVar(nullptr);  // Wipe current user from memory
         }
         break;
       }
@@ -161,7 +164,10 @@ void fingerprint_loop() {
         }
         // Send confirmation to screen
         log_attendance();  // Log successful attendance
-        screenSerial.println(JSON.stringify(current_user_json).c_str());
+        if (JSON.typeof(current_user_json) != "null") {
+          screenSerial.println(JSON.stringify(current_user_json).c_str());
+          current_user_json = JSONVar(nullptr);  // Wipe current user from memory
+        }
         card_scanned = false;
         while (finger.getImage() != FINGERPRINT_NOFINGER)
           yield();

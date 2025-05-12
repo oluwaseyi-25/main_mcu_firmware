@@ -140,6 +140,8 @@ user* new_user;
 uint8_t new_user_fprint_id = 0;
 String current_timestamp;
 String new_user_card_uid;
+String camera_response;
+JSONVar camera_response_json;
 user* current_user;
 JSONVar cmd, response;
 JSONVar current_user_json;
@@ -152,7 +154,8 @@ uint32_t face_scan_timer = 0;
 bool received_face_scan_response = false;
 
 uint8_t n_users = 0;
-String screen_command_str, screen_response_str, ssid, password;
+String screen_command_str, screen_response_str, ssid, password, ws_ip, ws_route;
+unsigned int ws_port;
 JSONVar screen_command, screen_response;
 
 enum SCREEN current_state = HOME_SCREEN;

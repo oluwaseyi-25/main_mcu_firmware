@@ -168,19 +168,23 @@ void rfid_loop() {
     readFromBlock(8, readStuff, sizeof(user));
   }
 
-  // TODO: Error check
   current_user = (user*)&readStuff;
+  // if (!current_user->matric_no || current_user->matric_no < 2005000000UL || !current_user->level || !current_user->fingerprintId) {
+  //   LOG_ERR("Card Read failed");
+  //   mfrc522.PICC_HaltA();
+  //   mfrc522.PCD_StopCrypto1();
+  //   return;
+  // }
   current_user_json["matric_no"] = String(current_user->matric_no);
   current_user_json["level"] = String(current_user->level * 100);
   current_user_json["dept"] = String(current_user->dept);
   current_user_json["fingerprintId"] = current_user->fingerprintId;
   current_user_json["scan_timestamp"] = current_timestamp;
   if (current_auth == NONE) {
+    current_user_json["verified"] = true;
     log_attendance();
     card_scanned = false;
-    current_user_json["verified"] = true;
-  }
-  else {
+  } else {
     current_user_json["verified"] = false;
     card_scanned = true;
     face_scanned = false;
