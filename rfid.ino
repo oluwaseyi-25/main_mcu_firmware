@@ -176,7 +176,7 @@ void rfid_loop() {
   //   return;
   // }
   current_user_json["matric_no"] = String(current_user->matric_no);
-  current_user_json["level"] = String(current_user->level * 100);
+  current_user_json["level"] = current_user->level * 100;
   current_user_json["dept"] = String(current_user->dept);
   current_user_json["fingerprintId"] = current_user->fingerprintId;
   current_user_json["scan_timestamp"] = current_timestamp;

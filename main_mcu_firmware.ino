@@ -17,7 +17,6 @@ void camera_loop() {
     if ((bool)current_user_json["verified"]) {
       LOG("We know you!");
       screenSerial.println(JSON.stringify(current_user_json).c_str());
-      log_attendance();
       tries_left = 3;
       current_user_json = JSONVar(nullptr);  // Wipe current user from memory
       card_scanned = false;
@@ -28,7 +27,6 @@ void camera_loop() {
 
       if (!tries_left) {
         LOG("\nMaximum trials exceeded!");
-        log_attendance();
         current_user_json = JSONVar(nullptr);  // Wipe current user from memory
         tries_left = 3;  // Reset counter
         card_scanned = false;
@@ -137,7 +135,7 @@ void loop() {
       CMD_INPUT face_details;
       face_details.args["cmd"] = "verify_face";
       face_details.args["matric_no"] = current_user->matric_no;
-      face_details.args["level"] = current_user->level;
+      face_details.args["level"] = current_user->level * 100;
       face_details.args["dept"] = current_user->dept;
 
       LOG_CAM(JSON.stringify(cmdResponseToJSON(take_photo(face_details))).c_str());
